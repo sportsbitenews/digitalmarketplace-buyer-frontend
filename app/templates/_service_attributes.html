@@ -11,8 +11,8 @@
     ) %}
       {% if not question.is_empty %}
         {% call summary.row() %}
-          {{ summary.field_name(question.label) }}
-          {{ summary[question.type](question.value, question.assurance) }}
+          {{ summary.field_name(question.label, bold=question.followup) }}
+          {{ summary[question.type](question.value, question.assurance, bold=question.followup) }}
 
         {% endcall %}
       {% endif %}
