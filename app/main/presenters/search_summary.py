@@ -1,5 +1,7 @@
 import os
 import yaml
+from collections import defaultdict
+
 from flask import Markup, escape
 
 
@@ -137,10 +139,7 @@ class SearchSummary(object):
 
         def _add_filter_to_group(group_name, filter):
             option_label = _get_label_for_boolean_option(filter)
-            if group_name not in groups:
-                groups[group_name] = [option_label]
-            else:
-                groups[group_name].append(option_label)
+            groups[group_name].append(option_label)
 
         def _sort_groups(groups):
             sorted_groups = []
@@ -150,7 +149,7 @@ class SearchSummary(object):
                     sorted_groups.append((group, groups[group]))
             return sorted_groups
 
-        groups = {}
+        groups = defaultdict(list)
         for filter_mapping in request_args.lists():
             filter, values = filter_mapping
             if filter == 'lot' or filter == 'q':
@@ -160,8 +159,8 @@ class SearchSummary(object):
                 _add_filter_to_group(group_name, filter)
             else:  # filter is a group whose values are the options
                 group_name = _get_group_label_for_option(filter)
-                groups[group_name] = [
-                    _get_label_for_string_option(value) for value in values]
+                groups[group_name].extend(
+                    _get_label_for_string_option(value) for value in values)
         return _sort_groups(groups)
 
 
