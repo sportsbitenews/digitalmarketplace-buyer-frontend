@@ -125,6 +125,9 @@ def _get_aggregations_for_lot_with_filters(lot, content_manifest, framework, req
     for filter_to_remove in aggregate_on_fields.intersection(aggregate_request_args.keys()):
         aggregate_request_args.pop(filter_to_remove)
 
+    if 'page' in aggregate_request_args:
+        del aggregate_request_args['page']
+
     aggregate_request_args['lot'] = lot
 
     aggregate_api_response = search_api_client.aggregate_services(aggregations=aggregate_on_fields,
@@ -298,7 +301,7 @@ def _annotate_categories_with_selection(lot_slug, category_filters, request, url
                                                                   keys_to_remove,
                                                                   lot_slug=lot_slug,
                                                                   category=category,
-                                                                  parent_category=request.values.get('parentCategory'))
+                                                                  parent_category=parent_category)
             category['link'] = search_link_builder(url_args)
 
     # When there's a selection, and the selected category has children, remove sibling subcategories,

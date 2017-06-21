@@ -229,7 +229,7 @@ def search_services():
         lots=lots,
         pagination=pagination_config,
         search_keywords=get_keywords_from_request(request),
-        search_query=query_args_for_pagination(request.args),
+        search_query=query_args_for_pagination(clean_request_args(request.args, filters.values(), lots_by_slug)),
         services=search_results_obj.search_results,
         summary=search_summary.markup(),
         title='Search results',
