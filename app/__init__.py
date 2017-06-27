@@ -7,7 +7,9 @@ from dmutils import init_app, flask_featureflags
 from dmcontent.content_loader import ContentLoader
 from dmutils.user import User
 
+import re
 from config import configs
+from jinja2 import evalcontextfilter, Markup, escape
 
 
 login_manager = LoginManager()
@@ -17,6 +19,27 @@ feature_flags = flask_featureflags.FeatureFlag()
 csrf = CsrfProtect()
 
 content_loader = ContentLoader('app/content')
+
+
+# find repeated sequences of '\r\n\', optionally separated by a space character
+_multiple_newlines_re = re.compile(r'(\r\n ?){2,}')
+# find \r\n sequences
+_single_newline_re = re.compile(r'(\r\n)')
+
+
+@evalcontextfilter
+def nl2br(eval_ctx, value, question_type=None):
+    if question_type and question_type != 'textbox_large':
+        return value
+
+    # limit sequences of "\r\n\r\n ..."s to two
+    value = _multiple_newlines_re.sub(u'\r\n\r\n', escape(value))
+    result = _single_newline_re.sub(u'<br>', value)
+
+    if eval_ctx.autoescape:
+        result = Markup(result)
+
+    return result
 
 
 def create_app(config_name):
@@ -48,6 +71,8 @@ def create_app(config_name):
     application.register_blueprint(status_blueprint)
     application.register_blueprint(main_blueprint)
     application.register_blueprint(external_blueprint)
+
+    application.add_template_filter(nl2br)
 
     login_manager.login_view = 'main.render_login'
     login_manager.login_message_category = "must_login"
