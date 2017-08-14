@@ -3,6 +3,8 @@ import json
 import mock
 import re
 import pytest
+
+from ..helpers.test_search_helpers import find_search_summary
 from ...helpers import BaseApplicationTest
 from ...helpers import data_api_client
 
@@ -12,11 +14,6 @@ def find_pagination_links(res_data):
         '<li class="[next|previous]+">[^<]+<a\ href="(/g-cloud/search\?[^"]+)',
         res_data,
         re.MULTILINE)
-
-
-def find_search_summary(res_data):
-    return re.findall(
-        r'<span class="search-summary-count">.+</span>[^\n]+', res_data)
 
 
 def find_0_results_suggestion(res_data):

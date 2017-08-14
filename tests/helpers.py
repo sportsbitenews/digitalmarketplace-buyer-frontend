@@ -144,6 +144,14 @@ class BaseApplicationTest(object):
             'suppliers_by_prefix_fixture_page_with_next_and_prev.json')
 
     @staticmethod
+    def _get_direct_award_project_fixture():
+        return BaseApplicationTest._get_fixture_data('direct_award_project_fixture.json')
+
+    @staticmethod
+    def _get_direct_award_project_searches_fixture():
+        return BaseApplicationTest._get_fixture_data('direct_award_project_searches_fixture.json')
+
+    @staticmethod
     def _strip_whitespace(whitespace_in_this):
         return re.sub(r"\s+", "",
                       whitespace_in_this, flags=re.UNICODE)
