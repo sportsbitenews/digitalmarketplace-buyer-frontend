@@ -24,9 +24,10 @@ from ..helpers.search_helpers import (
     get_keywords_from_request, pagination,
     get_page_from_request, query_args_for_pagination,
     get_lot_from_request, build_search_query,
-    clean_request_args, get_request_url_without_any_filters
+    clean_request_args, get_request_url_without_any_filters,
 )
 from ..helpers import framework_helpers
+from ..helpers.search_save_helpers import SearchMeta
 from ..forms.direct_award_forms import CreateProjectForm
 
 from ..exceptions import AuthException
@@ -325,7 +326,6 @@ def save_search():
 @direct_award.route('/projects/create', methods=['POST'])
 def project_create():
     form = CreateProjectForm()
-    print(form.data)
     if form.validate_on_submit():
         name = form.name.data
         try:
@@ -352,81 +352,36 @@ def project_create():
                                 project_id=project['id']
                                 ))
     else:
-        # Get core data
         all_frameworks = data_api_client.find_frameworks().get('frameworks')
-        framework = framework_helpers.get_latest_live_framework(all_frameworks, 'g-cloud')
-        content_manifest = content_loader.get_manifest(framework['slug'], 'search_filters')
-        lots_by_slug = framework_helpers.get_lots_by_slug(framework)
-
-         # We need to get buyer-frontend query params from our saved search API URL.
-        search_query_params = search_api_client.get_frontend_params_from_search_api_url(request.form['search_api_url'])
-        search_query_params_multidict = MultiDict(search_query_params)
-
-        current_lot_slug = search_query_params_multidict.get('lot', None)
-        filters = filters_for_lot(current_lot_slug, content_manifest, all_lots=framework['lots'])
-        clean_request_query_params = clean_request_args(search_query_params_multidict, filters.values(), lots_by_slug)
-
-        # # Now build the buyer-frontend URL representing the saved Search API URL
-        # search_page_base_url = url_for('main.search_services')
-        # parsed_url = list(urlparse(search_page_base_url))
-        # parsed_url[4] = urlencode(search_query_params)
-        # search_page_full_url = urlunparse(parsed_url)
-
-        # Get the saved Search API URL result set and build the search summary.
-        search_api_response = search_api_client._get(request.form['search_api_url'])
-        search_summary = SearchSummary(
-            search_api_response['meta']['total'],
-            clean_request_query_params.copy(),
-            filters.values(),
-            lots_by_slug
-        )
+        search_meta = SearchMeta(request.form['search_api_url'],
+                                 all_frameworks)
 
         return render_template('direct-award/save-search.html',
                                form=form,
-                               search_summary=search_summary), 400
+                               search_summary=search_meta.search_summary,
+                               search_api_url=search_meta.url)
 
 
 @direct_award.route('/projects/<int:project_id>', methods=['GET'])
 def view_project(project_id):
-    # Get core data
+
     all_frameworks = data_api_client.find_frameworks().get('frameworks')
-    framework = framework_helpers.get_latest_live_framework(all_frameworks, 'g-cloud')
-    content_manifest = content_loader.get_manifest(framework['slug'], 'search_filters')
-    lots_by_slug = framework_helpers.get_lots_by_slug(framework)
 
     # Get the requested Direct Award Project.
     project = data_api_client.get_direct_award_project(user_id=current_user.id, project_id=project_id)['project']
     searches = data_api_client.find_direct_award_project_searches(user_id=current_user.id,
                                                                   project_id=project['id'])['searches']
 
+
     # A Direct Award project has one 'active' search which is what we will display on this overview page.
     search = list(filter(lambda x: x['active'], searches))[0]
 
-    # We need to get buyer-frontend query params from our saved search API URL.
-    search_query_params = search_api_client.get_frontend_params_from_search_api_url(search['searchUrl'])
-    search_query_params_multidict = MultiDict(search_query_params)
+    search_meta = SearchMeta(search['searchUrl'],
+                                 all_frameworks)
 
-    current_lot_slug = search_query_params_multidict.get('lot', None)
-    filters = filters_for_lot(current_lot_slug, content_manifest, all_lots=framework['lots'])
-    clean_request_query_params = clean_request_args(search_query_params_multidict, filters.values(), lots_by_slug)
-
-    # Now build the buyer-frontend URL representing the saved Search API URL
-    search_page_base_url = url_for('main.search_services')
-    parsed_url = list(urlparse(search_page_base_url))
-    parsed_url[4] = urlencode(search_query_params)
-    search_page_full_url = urlunparse(parsed_url)
-
-    # Get the saved Search API URL result set and build the search summary.
-    search_api_response = search_api_client._get(search['searchUrl'])
-    search_summary = SearchSummary(
-        search_api_response['meta']['total'],
-        clean_request_query_params.copy(),
-        filters.values(),
-        lots_by_slug
-    )
 
     return render_template('direct-award/view-project.html',
                            project_name=project['name'],
-                           search_page_url=search_page_full_url,
+                           search_page_url=search_meta.url,
                            search_created_at=search['createdAt'],
-                           search_summary=search_summary.markup())
+                           search_summary=search_meta.search_summary.markup())
