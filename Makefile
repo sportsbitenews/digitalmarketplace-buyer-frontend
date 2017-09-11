@@ -66,7 +66,8 @@ test-flake8: virtualenv
 
 .PHONY: test-python
 test-python: virtualenv
-	${VIRTUALENV_ROOT}/bin/py.test ${PYTEST_ARGS}
+	${VIRTUALENV_ROOT}/bin/py.test ${PYTEST_ARGS} --cov=app --cov=tests
+	${VIRTUALENV_ROOT}/bin/check_tests
 
 .PHONY: test-javascript
 test-javascript: frontend-build
