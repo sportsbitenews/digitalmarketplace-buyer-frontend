@@ -304,7 +304,7 @@ class TestDirectAwardProjectOverview(TestDirectAwardBase):
         assert self._task_has_link(tasklist, 3, '/g-cloud/search?q=accelerator') is False
         assert self._task_search_ended(tasklist, 4) is True
         assert self._task_has_link(tasklist, 5,
-                                   '/buyers/direct-award/g-cloud/projects/1/download-search-results') is True
+                                   '/buyers/direct-award/g-cloud/projects/1/results') is True
 
         assert self._cannot_start_from_task(tasklist, 6) is True
 
@@ -331,7 +331,7 @@ class TestDirectAwardProjectOverview(TestDirectAwardBase):
         assert self._task_has_link(tasklist, 3, '/g-cloud/search?q=accelerator') is False
         assert self._task_search_downloaded(tasklist, 5) is True
         assert self._task_has_link(tasklist, 5,
-                                   '/buyers/direct-award/g-cloud/projects/1/download-search-results') is True
+                                   '/buyers/direct-award/g-cloud/projects/1/results') is True
 
         assert self._cannot_start_from_task(tasklist, 9) is True
 

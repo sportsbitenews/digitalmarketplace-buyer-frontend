@@ -8,13 +8,6 @@ from flask import Markup, escape
 class SearchSummary(object):
     """Provides a paragraph summarising the search performed and results"""
 
-    COUNT_PRE_TAG = '<span class="search-summary-count">'
-    COUNT_POST_TAG = '</span>'
-    KEYWORDS_PRE_TAG = '<em>'
-    KEYWORDS_POST_TAG = '</em>'
-    LOT_PRE_TAG = '<em>'
-    LOT_POST_TAG = '</em>'
-
     @staticmethod
     def write_parts_as_sentence(parts):
         sentence = [part for part in parts if part is not None]
@@ -31,7 +24,16 @@ class SearchSummary(object):
             formatted_conjunction = " {} ".format(final_conjunction)
             return formatted_conjunction.join([u', '.join(start), end])
 
-    def __init__(self, results_total, request_args, filter_groups, lots_by_slug):
+    def __init__(self, results_total, request_args, filter_groups, lots_by_slug, markup_tags=True):
+        self.markup_tags = markup_tags
+
+        self.COUNT_PRE_TAG = '<span class="search-summary-count">' if markup_tags else ''
+        self.COUNT_POST_TAG = '</span>' if markup_tags else ''
+        self.KEYWORDS_PRE_TAG = '<em>' if markup_tags else ''
+        self.KEYWORDS_POST_TAG = '</em>' if markup_tags else ''
+        self.LOT_PRE_TAG = '<em>' if markup_tags else ''
+        self.LOT_POST_TAG = '</em>' if markup_tags else ''
+
         self._lots_by_slug = lots_by_slug
         self._set_initial_sentence(results_total, request_args)
 
@@ -50,7 +52,8 @@ class SearchSummary(object):
                     SummaryFragment(
                         group_id=group_id,
                         filters=filters,
-                        rules=group_rules)
+                        rules=group_rules,
+                        markup_tags=self.markup_tags)
                 )
 
     def _set_initial_sentence(self, results_total, request_args):
@@ -58,9 +61,9 @@ class SearchSummary(object):
         lot_label = (self._lots_by_slug.get(request_args.get('lot'), {}).get('name')
                      or 'All categories')
         lot = u"{}{}{}".format(
-            SearchSummary.LOT_PRE_TAG,
+            self.LOT_PRE_TAG,
             lot_label,
-            SearchSummary.LOT_POST_TAG
+            self.LOT_POST_TAG
         )
         if int(results_total) == 1:
             self.count = '1'
@@ -71,9 +74,9 @@ class SearchSummary(object):
         if keywords != '':
             self.sentence = u"{} containing {}{}{} in {}".format(
                 count_string,
-                SearchSummary.KEYWORDS_PRE_TAG,
+                self.KEYWORDS_PRE_TAG,
                 keywords,
-                SearchSummary.KEYWORDS_POST_TAG,
+                self.KEYWORDS_POST_TAG,
                 lot)
         else:
             self.sentence = u"{} in {}".format(count_string, lot)
@@ -184,11 +187,12 @@ class SummaryRules(object):
 class SummaryFragment(object):
     """Provides access to a search summary fragment"""
 
-    PRE_TAG = u'<em>'
-    POST_TAG = u'</em>'
     FINAL_CONJUNCTION = u'and'
 
-    def __init__(self, group_id, filters, rules):
+    def __init__(self, group_id, filters, rules, markup_tags=True):
+        self.PRE_TAG = u'<em>' if markup_tags else ''
+        self.POST_TAG = u'</em>' if markup_tags else ''
+
         self.id = group_id
         self.rules = rules
         self.form = 'singular'
@@ -221,9 +225,9 @@ class SummaryFragment(object):
     def _get_filters(self, filters):
         def _mark_up_filter(filter):
             return u"{}{}{}".format(
-                SummaryFragment.PRE_TAG,
+                self.PRE_TAG,
                 filter,
-                SummaryFragment.POST_TAG,
+                self.POST_TAG,
             )
 
         processed_filters = []
