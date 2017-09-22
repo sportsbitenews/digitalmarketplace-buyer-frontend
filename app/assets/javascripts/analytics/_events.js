@@ -97,8 +97,23 @@
         });
       }
     },
+    trackEvent: function (e) {
+      var $target = $(e.target);
+      var href = $target.prop('href');
+      var category = $target.prop('data-analytics-category');
+      var action = $target.prop('data-analytics-action');
+      var text = $target.prop('data-analytics-label');
+      
+      GOVUK.analytics.trackEvent(category, action, {
+        'label': text,
+        'transport': 'beacon'
+      });
+    },
     'init': function () {
-      $('body').on('click', 'a', this.supplierListDownload)
+      // TODO: this should be within a specific class and only initialised on the supplier list download page
+      // Currently this is running on click of any <a> link!
+      $('body').on('click', 'a', this.supplierListDownload);
+      $('[data-analytics=trackEvent]').on('click', this.trackEvent);
     }
   };
 })(window, window.GOVUK);
